@@ -1,0 +1,43 @@
+
+P1
+========
+
+Statement
+
+OGNL (Object-Graph Navigation Language) expression for differentiating companies based on the domain value of an email address involves using the email address domain to categorize or identify various companies. 
+
+Hint: This expression can extract the domain part of the email address (the part after the "@" symbol), allowing the system to make distinctions between different companies based on their email address domains.
+ 
+ 
+
+Result
+
+Test case1 :
+
+User 1 email ID: John@xyz.com [Expected: XYZ]
+
+Test case2 :
+
+User 2 email ID: John@abc.com [Expected: ABC]
+
+
+
+
+Solution:
+
+// Step 1: Initialize a new HashSet to hold the company name(s)
+#Company = new java.util.HashSet(), 
+
+// Step 2: Retrieve the "email" attribute from the current object (#this). 
+// If it exists, get its values and convert the list to a string (usually returns one email).
+// If not present, use an empty string to avoid null errors.
+#email = #this.get("email") != null ? #this.get("email").getValues().toString() : "", 
+
+// Step 3: If the email string contains "@xyz.com", add "XYZ" to the Company set
+#email.matches(".*@xyz.com.*") ? #Company.add("XYZ") : null, 
+
+// Step 4: If the email string contains "@abc.com", add "ABC" to the Company set
+#email.matches(".*@abc.com.*") ? #Company.add("ABC") : null, 
+
+// Step 5: Return a new AttributeValue object, wrapping the final set of company names
+new org.sourceid.saml20.adapter.attribute.AttributeValue(#Company)

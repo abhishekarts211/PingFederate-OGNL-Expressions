@@ -53,7 +53,7 @@ Solution:
                 #this.get("country").toString().equalsIgnoreCase("DE") ?
 
                 (
-                    // If from DE, allow access only if businessCategory is NOT "Consumer Healthcare"
+                    // If from DE, allow access only if businessCategory is NOT "Marketing"
                     #this.get("ds.ldap.businessCategory") != null &&
                     !#this.get("ds.ldap.businessCategory").hasValue("Marketing") ?
                     (#access = @java.lang.Boolean@TRUE) :

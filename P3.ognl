@@ -1,0 +1,47 @@
+P3
+========
+
+🔹 Problem Statement:
+In a SAML identity provider (IdP) configuration, users may be members of groups from multiple sources:
+
+Internal users with DNs like cn=ODS_<GroupName>,... (from OpenDJ)
+
+External users with DNs like cn=AAD_<GroupName>,... (from AzureAD)
+
+The goal is to write an OGNL expression that:
+
+Retrieves all group DNs from thee two Directory Servers
+
+Parses each DN to extract the Common Name (CN) component.
+
+Identifies groups that start with either ODS_ or AAD_.
+
+Adds these group names to a single list.
+
+Returns a single SAML attribute (AttributeValue) containing all the relevant group names.
+ 
+ 
+Solution:
+
+
+#roles = new java.util.ArrayList(),
+
+// Fetching Internal user groups from ODS Directory
+#internalGroups = #this.get("ds.ODS.isMemberOf") != null ? #this.get("ds.ODS.isMemberOf").getValues() : {},
+#internalGroups.{
+    #dn = #this,
+    #ldapName = new javax.naming.ldap.LdapName(#dn),
+    #cn = #ldapName.getRdn(#group.size() - 1).getValue().toString(),
+    #roles.add(#cn)
+},
+
+// Fetching External user groups from AAD
+#externalGroups = #this.get("ds.AAD.isMemberOf") != null ? #this.get("ds.AAD.isMemberOf").getValues() : {},
+#externalGroups.{
+    #dn = #this,
+    #ldapName = new javax.naming.ldap.LdapName(#dn),
+    #cn = #ldapName.getRdn(#group.size() - 1).getValue().toString(),
+    #roles.add(#cn)
+},
+
+new org.sourceid.saml20.adapter.attribute.AttributeValue(#roles)

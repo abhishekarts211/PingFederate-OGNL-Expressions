@@ -1,0 +1,39 @@
+
+P12
+=======
+
+Role Resolution Based on Group Priority and Department
+🧩 Problem Statement:
+An enterprise user can belong to multiple AD groups and departments. However, for access control purposes, only one role should be issued, based on a combination of their group membership and department. The logic is as follows:
+
+If the user is in group SEC_Admins and department is "Security" → assign "SecurityAdmin"
+
+If the user is in group HR_Managers and department is "Human Resources" → assign "HRManager"
+
+If the user is in group IT_Techs and department is "IT" → assign "ITSupport"
+
+If none match → assign "GenericUser"
+
+Return the assigned role as a SAML attribute.
+
+
+
+Solution:
+
+#groups = #this.get("ds.ods.memberOf") != null ? #this.get("ds.ods.memberOf").getValues().toString() : "",
+#dept = #this.get("department") != null ? #this.get("department").toString() : "",
+#role = "GenericUser",
+
+(#groups.contains("SEC_Admins") && #dept.equalsIgnoreCase("Security")) ? (#role = "SecurityAdmin") :
+(#groups.contains("HR_Managers") && #dept.equalsIgnoreCase("Human Resources")) ? (#role = "HRManager") :
+(#groups.contains("IT_Techs") && #dept.equalsIgnoreCase("IT")) ? (#role = "ITSupport") : {},
+
+new org.sourceid.saml20.adapter.attribute.AttributeValue(#role)
+
+
+
+
+
+
+
+

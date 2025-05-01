@@ -1,0 +1,56 @@
+
+P13
+=======
+
+🔷 Problem: Composite Risk Scoring and Decision for Dynamic Access Control
+🧩 Problem Statement:
+In a secure enterprise environment, not all access requests are equal—some present higher risk depending on where, when, and how the user is accessing the application. To enforce dynamic access control, your PingFederate implementation must calculate a composite risk score for each login attempt using a combination of geolocation, time-based context, email domain trustworthiness, and group membership.
+
+Your objective is to implement an OGNL expression that evaluates the user's risk posture in real-time and assigns them either a "High Risk" or "Low Risk" label based on the following criteria:
+
+🔐 Risk Evaluation Logic:
+Factor	Condition	Risk Points
+Country Risk	If the user's country is RU, CN, or KP	+3
+Time-Based Risk	If the user accesses outside of business hours (before 6 AM or after 6 PM)	+2
+Email Trust Check	If the user's email does not end with @yourcompany.com	+5
+Group Membership Check	If the user is not a member of the LowRiskGroup	+2
+
+The final risk score is the sum of all applicable risk points.
+
+✅ Decision Criteria:
+If the total risk score is greater than or equal to 7, classify the user as "High Risk".
+
+Otherwise, classify them as "Low Risk".
+
+This classification will be returned as a SAML attribute called "riskLevel" and may be used downstream for:
+
+Triggering step-up authentication (e.g., MFA)
+
+Conditional access to specific applications
+
+Security logging or risk-based monitoring
+
+
+
+
+Solution:
+
+
+
+#score = 0,
+
+#country = #this.get("country") != null ? #this.get("country").toString() : "",
+#score = #country.matches("(?i)RU|CN|KP") ? #score + 3 : #score,
+
+#time = @java.time.LocalTime@parse(#this.get("system.time").toString()),
+#hour = #time.getHour(),
+#score = (#hour < 6 || #hour >= 18) ? #score + 2 : #score,
+
+#email = #this.get("mail") != null ? #this.get("mail").toString().toLowerCase() : "",
+#score = (!#email.endsWith("@yourcompany.com")) ? #score + 5 : #score,
+
+#groupList = #this.get("ds.memberOf") != null ? #this.get("ds.memberOf").getValues() : new java.util.ArrayList(),
+#score = (!#groupList.contains("LowRiskGroup")) ? #score + 2 : #score,
+
+#riskLevel = #score >= 7 ? "High Risk" : "Low Risk",
+new org.sourceid.saml20.adapter.attribute.AttributeValue(#riskLevel)

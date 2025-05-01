@@ -1,0 +1,87 @@
+
+P6
+=======
+
+🔹 Problem Statement: Group, Country, and Business Category-Based Access Restriction in PingFederate
+In a PingFederate SSO integration, access to specific applications must be controlled using a combination of user group membership, country, and business category attributes. The system should apply conditional logic to determine whether a user is allowed to access the application.
+
+🔸 Requirements:
+The user must be a member of a specific LDAP group, such as:
+
+CN=ABC,OU=Groups,DC=abc,DC=com
+
+If the group matches, the user's access should then be evaluated based on:
+
+Country: Only allow users from approved countries like DE, CN, BE, BR, BG, etc.
+
+Business Category:
+
+If the user’s country is DE, only allow access if their businessCategory is not Marketing.
+
+For all other approved countries, allow access without business category check.
+
+If none of the conditions match or the user does not belong to the specified group, access should be denied by default.
+
+The OGNL expression must be used in Issuance Criteria and trigger an Error Result like "AccessDenied" when conditions are not met.
+
+
+
+Solution:
+
+
+#access = @java.lang.Boolean@FALSE,  // Initialize access flag as FALSE
+
+#groups = #this.get("ds.mds.memberOf") != null ? #this.get("ds.mds.memberOf").getValues() : {},
+
+#groups.{
+    #group = #this,
+    #group = new javax.naming.ldap.LdapName(#group),
+
+    // Check for specific group membership (case-insensitive match)
+    #group.toString().matches("(?i).*CN=SG-GSK-News-project-team,OU=SP,OU=MSO,DC=wmservice,DC=corpnet1,DC=com.*") ?
+
+    (
+        // Country must not be null
+        #this.get("country") != null ?
+
+        (
+            // Check if user is from an approved country
+            #this.get("country").toString().matches("(?i)CN|DE|BE|BR|BG|CA|CY|CZ|DK|EE") ?
+
+            (
+                // Special handling for Germany (DE)
+                #this.get("country").toString().equalsIgnoreCase("DE") ?
+
+                (
+                    // If from DE, allow access only if businessCategory is NOT "Consumer Healthcare"
+                    #this.get("ds.mds.businessCategory") != null &&
+                    !#this.get("ds.mds.businessCategory").hasValue("Consumer Healthcare") ?
+                    (#access = @java.lang.Boolean@TRUE) :
+                    (#access = @java.lang.Boolean@FALSE)
+                )
+
+                :
+
+                // For all other countries, allow access
+                (#access = @java.lang.Boolean@TRUE)
+            )
+
+            :
+
+            // If country is not in the approved list
+            (#access = @java.lang.Boolean@FALSE)
+        )
+
+        :
+
+        // If country is null
+        (#access = @java.lang.Boolean@FALSE)
+    )
+
+    :
+
+    // If group does not match
+    {}
+},
+
+#access  // Return final access decision (true or false)

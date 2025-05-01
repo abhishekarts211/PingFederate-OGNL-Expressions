@@ -1,0 +1,103 @@
+
+P5
+========
+
+🔹 Problem Statement: Group-Based Authorization for Guest Users in PingFederate
+In a PingFederate SSO environment, access control must be enforced to ensure that:
+
+Guest users from AAD are restricted from accessing specific SSO-integrated applications unless they are members of an approved group.
+
+Internal users (e.g., employees authenticated via internal directories like OpenDJ or another identity store) are allowed access without additional group validation.
+
+Requirements:
+Use an OGNL expression in the Issuance Criteria configuration of PingFederate to enforce group-based access control.
+
+The OGNL must:
+
+Identify whether a user is a Guest (typically based on AAD attributes or a suffix in UPN/email like #EXT# or domain checks).
+
+Check the user's group membership against a specific AAD group, using its Object ID.
+
+Allow only those Guest users who are members of the specified AAD group.
+
+If a Guest user does not belong to the required AAD group, the OGNL expression must trigger an error result (e.g., "AccessDenied") to block the SSO issuance process.
+
+Internal users should bypass this group check and be granted access by default.
+
+Example Use Case:
+AAD Guest user attempts to access an internal application.
+
+PingFederate checks their group memberships.
+
+If they are not in the "ApprovedGuestAccess" AAD group (identified by Object ID: abc12345-6789-...), access is denied.
+
+Internal users proceed normally without this check.
+
+
+
+
+
+
+
+Solution:
+
+
+
+
+#this.get("mapped.UserType") != null && 
+// Step 1: Check if the "UserType" attribute is present in the mapped attributes.
+// This attribute determines whether the user is "External" or "Internal".
+
+#this.get("mapped.UserType").toString().equalsIgnoreCase("External") ?
+// Step 2: If the "UserType" exists, check if its value is "External" (case-insensitive).
+// If the user is External, we move to the next block (AzureAD group membership check).
+// If not External, skip to the else part and allow access.
+
+(
+    #this.get("ds.AAD.isMemberOf") != null && 
+    // Step 3: Check if the AzureAD group membership attribute ("isMemberOf") is present.
+// This attribute should contain all AzureAD group Object IDs the user belongs to.
+// Null check avoids errors if the attribute is missing.
+
+    #this.get("ds.AAD.isMemberOf").getValues().contains("abc12345-6789-xxxx-yyyy-1234567890ab")
+    // Step 4: Retrieve the list of group Object IDs and check if it includes
+    // the specific approved group ID: "abc12345-6789-xxxx-yyyy-1234567890ab".
+    // This Object ID must be replaced with the actual target group in AzureAD.
+    // If the user is in this group, the expression evaluates to true (access allowed).
+)
+
+:
+// Step 5 (Else case): If the user is not External, return true directly.
+// This means Internal users are automatically allowed access without group validation.
+
+true
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,58 @@
+
+P11
+=======
+
+🔹 Problem Statement: Conditional MFA Enforcement Based on Time, Group, and Country
+🧩 Scenario:
+Your organization has a security policy that requires Multi-Factor Authentication (MFA) only under specific risk conditions. You want to enforce this policy within PingFederate using an OGNL expression.
+
+🔸 Conditions for Enforcing MFA:
+MFA should be triggered (return true) only if all of the following are true:
+
+The user is accessing the application outside of business hours (6:00 AM to 6:00 PM).
+
+The user is located in a high-risk country, such as:
+
+YE (Yemen)
+
+NG (Nigeria)
+
+KP (North Korea)
+
+The user is not a member of the MFA_Exempt group.
+
+🔸 Data Sources:
+system.time: Contains the access time in "HH:mm" format (24-hour clock).
+
+country: Attribute with the user's country code.
+
+ds.memberOf: List of group DNs the user is a member of.
+
+✅ Objective:
+Write an OGNL expression that returns true if MFA must be enforced, or false if the user is allowed without MFA.
+
+
+
+
+Solution:
+
+#time = @java.time.LocalTime@parse(#this.get("system.time").toString()),
+#hour = #time.getHour(),
+#outsideBusinessHours = (#hour < 6 || #hour >= 18),
+
+#highRiskCountry = #this.get("country") != null ? 
+    #this.get("country").toString().matches("(?i)CN|RU|KP") : false,
+
+#groups = #this.get("ds.memberOf") != null ? #this.get("ds.memberOf").getValues().toString() : "",
+#isExempt = #groups.contains("MFA_Exempt"),
+
+#outsideBusinessHours && #highRiskCountry && !#isExempt
+
+
+
+
+
+
+
+
+

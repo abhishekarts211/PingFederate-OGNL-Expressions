@@ -1,0 +1,81 @@
+
+P14
+=======
+
+Problem : Employee Access Role Based on Department and Experience
+Problem Statement:
+
+You are given an employee's Department and Years of Experience. Based on the department, assign the employee one of the following roles:
+
+Engineering → "Developer", "Senior Developer", or "Lead Developer" based on experience.
+
+Marketing → "Marketing Specialist" or "Marketing Lead".
+
+HR → "HR Assistant", "HR Manager", or "HR Director".
+
+The role should be determined as:
+
+For Engineering:
+
+Less than 3 years → "Developer"
+
+3 to 6 years → "Senior Developer"
+
+More than 6 years → "Lead Developer"
+
+For Marketing:
+
+Less than 5 years → "Marketing Specialist"
+
+More than 5 years → "Marketing Lead"
+
+For HR:
+
+Less than 2 years → "HR Assistant"
+
+2 to 5 years → "HR Manager"
+
+More than 5 years → "HR Director"
+
+
+
+Input Example:
+
+Department: "Engineering"
+
+Years of Experience: 4
+
+Output Example:
+
+Roles = ["Senior Developer"]
+
+
+
+Solution:
+
+
+#roles = new java.util.ArrayList(),
+
+// Extract Department and Experience from the input
+#department = #this.get("department") != null ? #this.get("department").toString() : "",
+#experience = #this.get("experience") != null ? #this.get("experience").toString().toInteger() : 0,
+
+// Assign role based on department and experience
+#roles.add(#department.equalsIgnoreCase("Engineering") ? 
+          (#experience < 3 ? "Developer" : 
+           (#experience <= 6 ? "Senior Developer" : "Lead Developer")) : ""),
+
+#roles.add(#department.equalsIgnoreCase("Marketing") ? 
+          (#experience < 5 ? "Marketing Specialist" : "Marketing Lead") : ""),
+
+#roles.add(#department.equalsIgnoreCase("HR") ? 
+          (#experience < 2 ? "HR Assistant" : 
+           (#experience <= 5 ? "HR Manager" : "HR Director")) : ""),
+
+new org.sourceid.saml20.adapter.attribute.AttributeValue(#roles.toString().replace("[", "").replace("]", "").replace(",", ""))
+
+
+
+
+
+

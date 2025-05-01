@@ -1,0 +1,54 @@
+
+P8
+=======
+
+🔹 Problem Statement: Returning Multiple LDAP Group CNs as a Single String Value
+In a PingFederate SSO integration, users may belong to multiple LDAP groups whose names follow a specific naming convention or prefix (e.g., "IAM_"). These group names are stored in LDAP as full DNs under the attribute ds.opendjds.isMemberOf.
+
+The requirement is to:
+
+Retrieve all group DNs from the ds.opendjds.isMemberOf LDAP attribute.
+
+Parse each DN to extract the Common Name (CN).
+
+Filter only the CNs that start with a specific prefix, such as "IAM_".
+
+Combine all matching group names into a single comma-separated string (instead of a list/array).
+
+Return this string as a single SAML attribute value to the service provider.
+
+This transformation is required when the target application expects a flat string of group names instead of a multi-valued attribute.
+
+
+
+Solution:
+
+
+#Roles = new java.util.ArrayList(),
+// Step 1: Create an empty list called `Roles` to collect valid group names.
+
+#memberOf = #this.get("ds.opendjds.isMemberOf") != null ? #this.get("ds.opendjds.isMemberOf").getValues() : {},
+// Step 2: Retrieve group membership DNs from the LDAP attribute `ds.opendjds.isMemberOf`.
+// If the attribute is null, use an empty set to prevent errors.
+
+#memberOf.{
+    #group = #this,
+    // Step 3: Assign the current DN string to a variable named `#group`.
+
+    #group = new javax.naming.ldap.LdapName(#group),
+    // Step 4: Parse the DN string into an `LdapName` object for easy manipulation.
+
+    #cn = #group.getRdn(#group.size() - 1).getValue().toString(),
+    // Step 5: Extract the Common Name (CN) from the last RDN in the DN.
+    // Note: Adjust `getRdn(0)` if your CN is at the beginning of the DN instead of the end.
+
+    #cn.startsWith("IAM_") ? #Roles.add(#cn) : {}
+    // Step 6: If the CN starts with "IAM_", add it to the `Roles` list.
+    // Otherwise, do nothing.
+},
+
+new org.sourceid.saml20.adapter.attribute.AttributeValue(#Roles.toString().replace("[","").replace("]","").replace(",",","))
+
+// Step 7: Convert the list to a comma-separated string using `toString()`.
+// Remove the square brackets that Java's `ArrayList.toString()` adds: [item1, item2] → item1, item2
+// Return the final string as a single SAML attribute value.

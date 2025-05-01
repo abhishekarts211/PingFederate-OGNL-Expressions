@@ -31,14 +31,14 @@ Solution:
 
 #access = @java.lang.Boolean@FALSE,  // Initialize access flag as FALSE
 
-#groups = #this.get("ds.mds.memberOf") != null ? #this.get("ds.mds.memberOf").getValues() : {},
+#groups = #this.get("ds.ldap.memberOf") != null ? #this.get("ds.ldap.memberOf").getValues() : {},
 
 #groups.{
     #group = #this,
     #group = new javax.naming.ldap.LdapName(#group),
 
     // Check for specific group membership (case-insensitive match)
-    #group.toString().matches("(?i).*CN=SG-GSK-News-project-team,OU=SP,OU=MSO,DC=wmservice,DC=corpnet1,DC=com.*") ?
+    #group.toString().matches("(?i).*CN=ABC,OU=Groups,DC=abc,DC=com.*") ?
 
     (
         // Country must not be null
@@ -54,8 +54,8 @@ Solution:
 
                 (
                     // If from DE, allow access only if businessCategory is NOT "Consumer Healthcare"
-                    #this.get("ds.mds.businessCategory") != null &&
-                    !#this.get("ds.mds.businessCategory").hasValue("Consumer Healthcare") ?
+                    #this.get("ds.ldap.businessCategory") != null &&
+                    !#this.get("ds.ldap.businessCategory").hasValue("Marketing") ?
                     (#access = @java.lang.Boolean@TRUE) :
                     (#access = @java.lang.Boolean@FALSE)
                 )

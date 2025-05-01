@@ -1,0 +1,59 @@
+
+P2
+========
+
+Statement
+
+In Applications using OGNL, there is a need to dynamically split a string based on a delimiter (e.g., commas, spaces) to convert it into a list or array for further processing. The challenge lies in correctly applying the split function within OGNL syntax to ensure the string is parsed as expected, especially when used in data-driven web frameworks like Apache Struts.
+ 
+ 
+
+Result
+
+Test case1 :
+
+Group 1 DN: cn=ABC_Developer,ou=Groups,o=abc.com 
+
+[Expected: Developer]
+
+Test case2 :
+
+Group 2  DN: cn=ABC_Prod_Developer,ou=Groups,o=abc.com 
+
+[Expected: Prod_Developer]
+
+
+
+
+Solution:
+
+#Roles = new java.util.ArrayList(),
+// Initializes a new empty ArrayList named `Roles` to store role names extracted later.
+
+#memberOf = #this.get("ds.opendjds.isMemberOf") != null ? #this.get("ds.opendjds.isMemberOf").getValues() : {},
+// Retrieves the value of the attribute "ds.opendjds.isMemberOf" from the current context (#this).
+// If it's not null, get its values (assumed to be a collection of group DNs).
+// If it is null, use an empty collection {}.
+// The resulting list (group DNs) is stored in `#memberOf`.
+
+#memberOf.{
+// Begin iteration over each element (group DN string) in the `#memberOf` collection.
+
+  #group = #this,
+// Each element in the collection is assigned to `#group` (a DN string like "cn=ABC_Admin,ou=groups,dc=example,dc=com").
+
+  #group = new javax.naming.ldap.LdapName(#group),
+// Parses the DN string into a `LdapName` object, which allows structured access to parts of the DN.
+
+  #cn = #group.getRdn(#group.size() - 1).getValue().toString(),
+// Extracts the value of the last RDN (Relative Distinguished Name) component of the DN (e.g., "ABC_Admin").
+// Converts it to a string and stores it in `#cn`.
+
+  #Roles.add(#cn.toString().split("ABC_")[1])
+// Splits the CN string using "ABC_" as a delimiter and adds the second part (index 1) to the `Roles` list.
+// For example, "ABC_Admin" becomes ["", "Admin"] → "Admin" is added to `#Roles`.
+
+},
+new org.sourceid.saml20.adapter.attribute.AttributeValue(#Roles)
+// Wraps the final list of role names (`#Roles`) into a SAML AttributeValue object for return/output.
+

@@ -1,0 +1,53 @@
+
+P7
+=======
+
+🔹 Problem Statement: Filtering LDAP Groups by Common Prefix in PingFederate Using OGNL
+In a PingFederate SSO integration, users may belong to multiple LDAP groups stored in directory (e.g., Active Directory or OpenDJ). These group entries are represented as Distinguished Names (DNs) and typically follow a structured naming convention.
+
+The requirement is to:
+
+Fetch all group memberships from the LDAP attribute (e.g., memberOf).
+
+Parse each group DN to extract the Common Name (CN) component.
+
+Filter the groups based on a specific prefix in the CN (e.g., all groups starting with "APP_", "SSO_", or any custom application-specific prefix).
+
+Store or return only the matching group names (those whose CN starts with the defined prefix) to be used in authorization or attribute release policies.
+
+This logic must be implemented using an OGNL expression in PingFederate, allowing dynamic filtering of group memberships based on a startsWith condition on the CN.
+
+
+
+Solution:
+
+#Roles = new java.util.ArrayList(),
+// Step 1: Initialize an empty list named `Roles`.
+// This will be used to collect group names that match the desired prefix (e.g., "IAM_").
+
+#memberOf = #this.get("ds.opendjds.isMemberOf") != null ? #this.get("ds.opendjds.isMemberOf").getValues() : {},
+// Step 2: Retrieve the group membership attribute `ds.opendjds.isMemberOf` from the LDAP data store.
+// If the attribute exists (not null), extract its values (expected to be DNs - Distinguished Names).
+// If the attribute is null or missing, use an empty set to avoid errors.
+
+#memberOf.{
+    // Step 3: Iterate over each group DN in the list.
+
+    #group = #this,
+    // Assign the current group DN string to the variable `#group`.
+
+    #group = new javax.naming.ldap.LdapName(#group),
+    // Parse the DN string into a `LdapName` object so that we can extract individual components (like CN).
+
+    #cn = #group.getRdn(#group.size() - 1).getValue().toString(),
+    // Extract the value of the **last RDN** (Relative Distinguished Name) in the DN.
+    // This assumes the last RDN is the CN (Common Name). If your DNs are structured differently, you might need `getRdn(0)` instead.
+
+    #cn.startsWith("IAM_") ? #Roles.add(#cn) : {}
+    // Step 4: If the CN starts with the prefix "IAM_", add it to the `Roles` list.
+    // Otherwise, do nothing (skip that group).
+},
+
+new org.sourceid.saml20.adapter.attribute.AttributeValue(#Roles)
+// Step 5: Return the `Roles` list as a SAML attribute value.
+// This value will be released in the SAML assertion to the connected service provider.

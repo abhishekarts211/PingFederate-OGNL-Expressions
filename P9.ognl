@@ -1,0 +1,86 @@
+
+P9
+=======
+
+
+🔹 Problem Statement: Extracting and Formatting Group Name Using split() and substring() in OGNL
+In a PingFederate integration, user group names retrieved from an LDAP attribute (e.g., memberOf) often follow a naming convention like:
+
+IAM_Developer
+IAM_Admin
+IAM_Group
+
+The requirement is to:
+
+Extract the meaningful part of the group name (i.e., the role) by splitting the string using the underscore _ character.
+
+Convert the first character of the extracted role name to lowercase while keeping the rest of the string unchanged.
+
+Return the formatted value (e.g., "developer", "admin", "viewer") as part of a SAML attribute.
+
+This must be achieved using an OGNL expression that applies both split() and substring() functions within the expression logic.
+
+🔸 Example Transformation:
+Input Group Name	 Output
+IAM_Developer	     developer
+IAM_Admin	         admin
+IAM_Group	         group
+
+
+
+
+
+Solution:
+
+
+#Roles = new java.util.ArrayList(),
+// Step 1: Initialize an empty list called `Roles` to store the final formatted group names.
+
+#memberOf = #this.get("ds.opendjds.isMemberOf") != null ? #this.get("ds.opendjds.isMemberOf").getValues() : {},
+// Step 2: Retrieve all group DNs from the `ds.opendjds.isMemberOf` attribute.
+// If the attribute exists, get its values; otherwise, use an empty list to prevent errors.
+
+#memberOf.{
+    #group = #this,
+    // Step 3: Assign the current group DN string to the variable `#group`.
+
+    #group = new javax.naming.ldap.LdapName(#group),
+    // Step 4: Convert the group DN string into an `LdapName` object to allow parsing of its components.
+
+    #cn = #group.getRdn(#group.size() - 1).getValue().toString(),
+    // Step 5: Extract the **Common Name (CN)** from the last RDN (assumed to contain the group name like "IAM_Developer").
+
+    #cn.startsWith("IAM_") ?
+    // Step 6: Check if the CN starts with the prefix "IAM_". Only process groups that follow this naming convention.
+
+        #Roles.add(
+            (
+                // Step 7: Split the CN using "_" and extract the second part (e.g., "Developer").
+                (#cn.toString().split("_")[1]).substring(0,1).toLowerCase() +
+                // Step 8: Take the first character of the role and convert it to lowercase.
+                //         Example: "D" → "d"
+
+                (#cn.toString().split("_")[1]).substring(1)
+                // Step 9: Append the rest of the role name (from second character onward).
+                //         Example: "eveloper"
+
+                // Combined: "Developer" → "developer"
+            )
+        )
+    : {}
+    // If the CN does not start with "IAM_", do nothing.
+},
+
+new org.sourceid.saml20.adapter.attribute.AttributeValue(#Roles)
+// Step 10: Return the list of formatted role names (e.g., ["developer", "admin"]) as a SAML attribute value.
+
+
+
+
+
+
+
+
+
+
+

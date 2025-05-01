@@ -1,0 +1,71 @@
+
+P4
+========
+
+🔹 Problem Statement
+In an identity management system integrated with Active Directory (AD), users may belong to one or more of the following AD groups:
+
+(Admin)
+
+(User)
+
+(Visitor)
+
+The system must generate a three-digit logic code based on the user's membership across these groups:
+
+Group Combination	Logic Code
+No group	Null
+Only Admin	        100
+Only User	        010
+Only Visitor        001
+Adm + Usr	        110
+Adm + Vis	        101
+Usr + Vis	        011
+Adm + Usr + Vis 	111
+
+Each digit in the code represents membership in one group (ADM, USR, VIS respectively), where:
+
+1 = member
+
+0 = not a member
+
+The objective is to:
+
+Retrieve the user's group memberships from the attribute ds.ldap.memberOf.
+
+Parse the DNs to extract the Common Name (CN) values.
+
+Determine the user's group membership combination across the three known groups.
+
+Based on the combination, assign the correct three-digit logic code.
+
+If the user does not belong to any of the three specified groups, assign the value "Null".
+
+Return the logic code(s) as a SAML attribute.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Solution:
+
+
+#Roles = new java.util.HashSet(), 
+#groups = #this.get("ds.opendjds.isMemberOf")!=null?#this.get("ds.opendjds.isMemberOf").getValues():{}, 
+#groups.{ #group = #this, #group = new javax.naming.ldap.LdapName(#group), 
+#cn = #group.size() == 0 ? "" : #group.getRdn(#group.size() - 1).getValue().toString(), 
+#cn.equalsIgnoreCase("User") ? #cn != ("Admin") ? #cn != ("Visitor")? #Roles.add("010") : {} : {} : {},
+#cn.equalsIgnoreCase("Visitor") ? #cn != ("Admin") ? #cn != ("User")? #Roles.add("001") : {} : {} : {}, 
+#cn.equalsIgnoreCase("Admin") ? #cn.equalsIgnoreCase("User") ? #cn != ("Visitor")? #Roles.add("110") : {} : {} : {}, 
+#cn.equalsIgnoreCase("Admin") ? #cn != ("User") ? #cn.equalsIgnoreCase("Visitor")? #Roles.add("101") : {} : {} : {}, 
+#cn != ("Admin") ? #cn.equalsIgnoreCase("User") ? #cn.equalsIgnoreCase("Visitor")? #Roles.add("011") : {} : {} : {}, 
+#cn.equalsIgnoreCase("Admin") ? #cn.equalsIgnoreCase("User") ? #cn.equalsIgnoreCase("Visitor")? #Roles.add("111") : {} : {} : {},
+#cn.equalsIgnoreCase("Admin") ? #cn != ("User") ? #cn != ("Visitor")? #Roles.add("100") : {} : {} : {}},
+#Roles.size()==0?#Roles.add("Null") : {},
+new org.sourceid.saml20.adapter.attribute.AttributeValue(#Roles)
+
+
+ 
+ 

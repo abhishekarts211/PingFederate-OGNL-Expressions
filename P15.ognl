@@ -1,0 +1,50 @@
+
+P15
+=======
+
+Problem : Product Discount Eligibility Based on Age and Purchase History
+Problem Statement:
+
+You are tasked with assigning a discount code to customers based on their age and purchase history. The rules are as follows:
+
+If the customer is under 18 years old, they are eligible for a "TeenDiscount".
+
+If the customer is between 18 and 60 years old, they are eligible for a "RegularDiscount".
+
+If the customer is above 60 years old, they are eligible for a "SeniorDiscount".
+
+If the customer has made more than 5 purchases, they are eligible for a "LoyalCustomerDiscount".
+
+If the customer is under 18 and has made more than 10 purchases, they get an additional "YoungLoyaltyBonus".
+
+Input Example:
+
+Age: 25
+
+Number of Purchases: 6
+
+Output Example:
+
+DiscountCode = ["RegularDiscount", "LoyalCustomerDiscount"]
+
+
+
+Solution:
+
+#discounts = new java.util.ArrayList(),
+
+// Get the age and number of purchases
+#age = #this.get("age") != null ? #this.get("age").toString().toInteger() : 0,
+#purchases = #this.get("purchaseCount") != null ? #this.get("purchaseCount").toString().toInteger() : 0,
+
+// Assign discounts based on age
+#discounts.add(#age < 18 ? "TeenDiscount" : 
+               (#age <= 60 ? "RegularDiscount" : "SeniorDiscount")),
+
+// Assign loyalty discounts based on purchase count
+#discounts.add(#purchases > 5 ? "LoyalCustomerDiscount" : ""),
+
+// Add Young Loyalty Bonus if under 18 and more than 10 purchases
+#discounts.add(#age < 18 && #purchases > 10 ? "YoungLoyaltyBonus" : ""),
+
+new org.sourceid.saml20.adapter.attribute.AttributeValue(#discounts.toString().replace("[", "").replace("]", "").replace(",", ""))
